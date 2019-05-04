@@ -20,6 +20,7 @@
 	include("vs2013.lua")
 	include("vs2015.lua")
 	include("vs2017.lua")
+	include("vs2019.lua")
 
 	-- Initialize Specific API
 
@@ -67,6 +68,12 @@
 			"4.0",
 			"4.1",
 			"5.0",
+			"rootsig_1.0",
+			"rootsig_1.1",
+			"6.0",
+			"6.1",
+			"6.2",
+			"6.3"
 		}
 	}
 
@@ -140,5 +147,7 @@
 			_ACTION == "vs2012" or
 			_ACTION == "vs2013" or
 			_ACTION == "vs2015" or
-			_ACTION == "vs2017";
+			_ACTION == "vs2017" or
+			_ACTION == "vs2019" or
+			false;
 	end

@@ -124,7 +124,6 @@
 			end,
 			-- source files are handled at the leaves
 			onleaf = function(node, depth)
-
 				local excludesFromBuild = {}
 				for cfg in project.eachconfig(prj) do
 					local cfgname = codelite.cfgname(cfg)
@@ -140,7 +139,7 @@
 					_p(depth, '<File Name="%s"/>', node.relpath)
 				end
 			end,
-		}, false, 1)
+		}, true)
 	end
 
 	function m.dependencies(prj)
@@ -197,8 +196,9 @@
 		end
 
 		local toolset = m.getcompiler(cfg)
-		local cxxflags = table.concat(table.join(toolset.getcxxflags(cfg), cfg.buildoptions), ";")
-		local cflags   = table.concat(table.join(toolset.getcflags(cfg), cfg.buildoptions), ";")
+		local forceincludes = toolset.getforceincludes(cfg)
+		local cxxflags = table.concat(table.join(toolset.getcxxflags(cfg), forceincludes, cfg.buildoptions), ";")
+		local cflags   = table.concat(table.join(toolset.getcflags(cfg), forceincludes, cfg.buildoptions), ";")
 		local asmflags = ""
 		local pch      = ""
 
@@ -268,9 +268,20 @@
 		local pauseexec  = iif(prj.kind == "ConsoleApp", "yes", "no")
 		local isguiprogram = iif(prj.kind == "WindowedApp", "yes", "no")
 		local isenabled  = iif(cfg.flags.ExcludeFromBuild, "no", "yes")
+		local ldPath = ''
 
-		_x(3, '<General OutputFile="%s" IntermediateDirectory="%s" Command="%s" CommandArguments="%s" UseSeparateDebugArgs="%s" DebugArguments="%s" WorkingDirectory="%s" PauseExecWhenProcTerminates="%s" IsGUIProgram="%s" IsEnabled="%s"/>',
-			targetname, objdir, command, cmdargs, useseparatedebugargs, debugargs, workingdir, pauseexec, isguiprogram, isenabled)
+		for _, libdir in ipairs(cfg.libdirs) do
+			ldPath = ldPath .. ":" .. project.getrelative(cfg.project, libdir)
+		end
+
+		if ldPath == nil or ldPath == '' then
+			_x(3, '<General OutputFile="%s" IntermediateDirectory="%s" Command="%s" CommandArguments="%s" UseSeparateDebugArgs="%s" DebugArguments="%s" WorkingDirectory="%s" PauseExecWhenProcTerminates="%s" IsGUIProgram="%s" IsEnabled="%s"/>',
+				targetname, objdir, command, cmdargs, useseparatedebugargs, debugargs, workingdir, pauseexec, isguiprogram, isenabled)
+		else
+			ldPath = string.sub(ldPath, 2)
+			_x(3, '<General OutputFile="%s" IntermediateDirectory="%s" Command="LD_LIBRARY_PATH=%s %s" CommandArguments="%s" UseSeparateDebugArgs="%s" DebugArguments="%s" WorkingDirectory="%s" PauseExecWhenProcTerminates="%s" IsGUIProgram="%s" IsEnabled="%s"/>',
+ 				targetname, objdir, ldPath, command, cmdargs, useseparatedebugargs, debugargs, workingdir, pauseexec, isguiprogram, isenabled)
+		end
 	end
 
 	function m.environment(cfg)
@@ -307,8 +318,7 @@
 			_p(3, '<PreBuild>')
 			local commands = os.translateCommandsAndPaths(cfg.prebuildcommands, cfg.project.basedir, cfg.project.location)
 			for _, command in ipairs(commands) do
-				_x(4, '<Command Enabled="yes">%s</Command>',
-				p.esc(command))
+				_x(4, '<Command Enabled="yes">%s</Command>', command)
 			end
 			_p(3, '</PreBuild>')
 		end
@@ -319,8 +329,7 @@
 			_p(3, '<PostBuild>')
 			local commands = os.translateCommandsAndPaths(cfg.postbuildcommands, cfg.project.basedir, cfg.project.location)
 			for _, command in ipairs(commands) do
-				_x(4, '<Command Enabled="yes">%s</Command>',
-				p.esc(command))
+				_x(4, '<Command Enabled="yes">%s</Command>', command)
 			end
 			_p(3, '</PostBuild>')
 		end

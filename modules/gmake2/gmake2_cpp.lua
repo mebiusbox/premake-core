@@ -58,19 +58,19 @@
 	function cpp.initialize()
 		rule 'cpp'
 			fileExtension { ".cc", ".cpp", ".cxx", ".mm" }
-			buildoutputs  { "$(OBJDIR)/%{premake.modules.gmake2.cpp.makeUnique(cfg, file.objname)}.o" }
+			buildoutputs  { "$(OBJDIR)/%{file.objname}.o" }
 			buildmessage  '$(notdir $<)'
 			buildcommands {'$(CXX) %{premake.modules.gmake2.cpp.fileFlags(cfg, file)} $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"'}
 
 		rule 'cc'
 			fileExtension {".c", ".s", ".m"}
-			buildoutputs  { "$(OBJDIR)/%{premake.modules.gmake2.cpp.makeUnique(cfg, file.objname)}.o" }
+			buildoutputs  { "$(OBJDIR)/%{file.objname}.o" }
 			buildmessage  '$(notdir $<)'
 			buildcommands {'$(CC) %{premake.modules.gmake2.cpp.fileFlags(cfg, file)} $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"'}
 
 		rule 'resource'
 			fileExtension ".rc"
-			buildoutputs  { "$(OBJDIR)/%{premake.modules.gmake2.cpp.makeUnique(cfg, file.objname)}.res" }
+			buildoutputs  { "$(OBJDIR)/%{file.objname}.res" }
 			buildmessage  '$(notdir $<)'
 			buildcommands {'$(RESCOMP) $< -O coff -o "$@" $(ALL_RESFLAGS)'}
 
@@ -124,7 +124,6 @@
 			cfg._gmake = cfg._gmake or {}
 			cfg._gmake.filesets = {}
 			cfg._gmake.fileRules = {}
-			cfg._gmake.bases = {}
 
 			local files = table.shallowcopy(prj._.files)
 			table.foreachi(files, function(node)
@@ -255,26 +254,6 @@
 		cpp.addRuleFile(cfg, node)
 	end
 
-	function cpp.prepareEnvironment(rule, environ, cfg)
-		for _, prop in ipairs(rule.propertydefinition) do
-			local fld = p.rule.getPropertyField(rule, prop)
-			local value = cfg[fld.name]
-			if value ~= nil then
-
-				if fld.kind == "path" then
-					value = gmake2.path(cfg, value)
-				elseif fld.kind == "list:path" then
-					value = gmake2.path(cfg, value)
-				end
-
-				value = p.rule.expandString(rule, prop, value)
-				if value ~= nil and #value > 0 then
-					environ[prop.name] = p.esc(value)
-				end
-			end
-		end
-	end
-
 	function cpp.addRuleFile(cfg, node)
 		local rules = cfg.project._gmake.rules
 		local fileext = cpp.determineFiletype(cfg, node)
@@ -285,8 +264,8 @@
 			local environ = table.shallowcopy(filecfg.environ)
 
 			if rule.propertydefinition then
-				cpp.prepareEnvironment(rule, environ, cfg)
-				cpp.prepareEnvironment(rule, environ, filecfg)
+				gmake2.prepareEnvironment(rule, environ, cfg)
+				gmake2.prepareEnvironment(rule, environ, filecfg)
 			end
 
 			local shadowContext = p.context.extent(rule, environ)
@@ -767,18 +746,6 @@
 --
 -- Output the file compile targets.
 --
-
-	function cpp.makeUnique(cfg, f)
-		local cache = cfg._gmake.bases
-		local seq = cache[f]
-		if seq == nil then
-			cache[f] = 1
-			return f
-		else
-			cache[f] = seq + 1
-			return f .. tostring(seq)
-		end
-	end
 
 	cpp.elements.fileRules = function(cfg)
 		local funcs = {}

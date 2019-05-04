@@ -11,7 +11,7 @@
 
 #include <stdlib.h>
 
-#define PREMAKE_VERSION        "5.0.0-alpha13"
+#define PREMAKE_VERSION        "5.0.0-alpha14"
 #define PREMAKE_COPYRIGHT      "Copyright (C) 2002-2018 Jason Perkins and the Premake Project"
 #define PREMAKE_PROJECT_URL    "https://github.com/premake/premake-core/wiki"
 
@@ -53,6 +53,7 @@
 #else
 #include <unistd.h>
 #endif
+#include <stdint.h>
 
 /* not all platforms define this */
 #ifndef FALSE
@@ -85,7 +86,7 @@ extern const char* scripts_path;
 
 /* Bootstrapping helper functions */
 int do_chdir(lua_State* L, const char* path);
-unsigned long do_hash(const char* str, int seed);
+uint32_t do_hash(const char* str, int seed);
 void do_getabsolute(char* result, const char* value, const char* relative_to);
 int do_getcwd(char* buffer, size_t size);
 int do_isabsolute(const char* path);
