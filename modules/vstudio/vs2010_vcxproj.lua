@@ -2367,6 +2367,14 @@
 	function m.propertySheets(cfg)
 		p.push('<ImportGroup Label="PropertySheets" %s>', m.condition(cfg))
 		p.w('<Import Project="$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props" Condition="exists(\'$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props\')" Label="LocalAppDataPlatform" />')
+
+		if cfg.importprops and #cfg.importprops > 0 then
+			for i = 1, #cfg.importprops do
+				local prop = project.getrelative(cfg.project, cfg.importprops[i])
+				p.w('<Import Project="%s" />', prop);
+			end
+		end
+
 		p.pop('</ImportGroup>')
 	end
 

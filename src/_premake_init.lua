@@ -1373,6 +1373,13 @@
 		}
 	}
 
+	api.register {
+		name = "importprops",
+		scope = "config",
+		kind = "list:path",
+		tokens = true
+	}
+
 -----------------------------------------------------------------------------
 --
 -- Field name aliases for backward compatibility
